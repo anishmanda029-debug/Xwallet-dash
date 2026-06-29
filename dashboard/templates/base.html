@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}Premium Bot{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/extra.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="bg-mesh"></div>
+  <canvas id="particles-canvas"></canvas>
+
+  {% if session.user %}
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <span class="logo-name">PremiumBot</span>
+          <span class="logo-tag">Dashboard</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+        <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+      </a>
+
+      {% if session.user and (session.user.id|string == owner_id|string or is_authorised) %}
+      <div class="nav-section-label">Economy</div>
+      <a href="{{ url_for('users_page') }}" class="nav-item {% if request.endpoint=='users_page' %}active{% endif %}">
+        <span class="nav-icon">👥</span><span class="nav-label">Users</span>
+      </a>
+      <a href="{{ url_for('withdrawals_page') }}" class="nav-item {% if request.endpoint=='withdrawals_page' %}active{% endif %}">
+        <span class="nav-icon">💸</span><span class="nav-label">Withdrawals</span>
+      </a>
+      <a href="{{ url_for('deposits_page') }}" class="nav-item {% if request.endpoint=='deposits_page' %}active{% endif %}">
+        <span class="nav-icon">📥</span><span class="nav-label">Deposits</span>
+      </a>
+
+      <div class="nav-section-label">Content</div>
+      <a href="{{ url_for('tickets_page') }}" class="nav-item {% if request.endpoint=='tickets_page' %}active{% endif %}">
+        <span class="nav-icon">🎫</span><span class="nav-label">Tickets</span>
+      </a>
+      <a href="{{ url_for('giveaways_page') }}" class="nav-item {% if request.endpoint=='giveaways_page' %}active{% endif %}">
+        <span class="nav-icon">🎉</span><span class="nav-label">Giveaways</span>
+      </a>
+      <a href="{{ url_for('servers_page') }}" class="nav-item {% if request.endpoint=='servers_page' %}active{% endif %}">
+        <span class="nav-icon">🏠</span><span class="nav-label">Servers</span>
+      </a>
+
+      <div class="nav-section-label">System</div>
+      <a href="{{ url_for('settings_page') }}" class="nav-item {% if request.endpoint=='settings_page' %}active{% endif %}">
+        <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
+      </a>
+      <a href="{{ url_for('logs_page') }}" class="nav-item {% if request.endpoint=='logs_page' %}active{% endif %}">
+        <span class="nav-icon">📋</span><span class="nav-label">Logs</span>
+      </a>
+      {% endif %}
+
+      {% if session.user and session.user.id|string == owner_id|string %}
+      <div class="nav-section-label">Owner Only</div>
+      <a href="{{ url_for('authorised_page') }}" class="nav-item {% if request.endpoint=='authorised_page' %}active{% endif %}">
+        <span class="nav-icon">🔑</span><span class="nav-label">Authorised</span>
+      </a>
+      <a href="{{ url_for('backup_export') }}" class="nav-item">
+        <span class="nav-icon">💾</span><span class="nav-label">Export Backup</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <img src="https://cdn.discordapp.com/avatars/{{ session.user.id }}/{{ session.user.avatar }}.webp?size=64"
+             onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"
+             class="user-avatar" alt="Avatar"/>
+        <div class="user-info">
+          <span class="user-name">{{ session.user.username }}</span>
+          <span class="user-role">{% if session.user.id|string == owner_id|string %}👑 Owner{% else %}Member{% endif %}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">⏻</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" id="mainContent">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-toggle" id="mobileToggle">☰</button>
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="status-dot"></div>
+        <span class="status-text">Live</span>
+      </div>
+    </div>
+
+    <div class="content-area">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  {% else %}
+  {% block landing %}{% endblock %}
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

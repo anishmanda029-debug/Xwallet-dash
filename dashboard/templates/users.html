@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Users — PremiumBot{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="page-users">
+  <div class="toolbar">
+    <form class="search-form" method="GET" action="/users">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="q" value="{{ search }}" placeholder="Search username or ID…"
+               class="search-input" autocomplete="off"/>
+        {% if search %}<a href="/users" class="search-clear">✕</a>{% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    </form>
+    <div class="toolbar-right">
+      <span class="result-count">{{ users|length }} user{{ 's' if users|length != 1 }}</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th><th>ID</th><th>Holdings</th><th>Invites</th><th>Joined</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            {% set ub = balances.get(u.user_id, {}) %}
+            <tr class="user-row" data-uid="{{ u.user_id }}">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar-sm">{{ (u.username or '?')[0].upper() }}</div>
+                  <span class="username">{{ u.username or 'Unknown' }}</span>
+                </div>
+              </td>
+              <td><code class="id-code">{{ u.user_id }}</code></td>
+              <td>
+                {% set held = [] %}
+                {% for c in coin_order %}
+                  {% if ub.get(c) and (ub[c].balance or 0) > 0 %}
+                    {% set _ = held.append(fmt_coin(ub[c].balance, c)) %}
+                  {% endif %}
+                {% endfor %}
+                {% if held %}
+                  <span class="coin-val gold">{{ held|join(', ') }}</span>
+                {% else %}
+                  <span class="text-muted">No holdings</span>
+                {% endif %}
+              </td>
+              <td><span class="invite-val">{{ u.invites or 0 }}</span></td>
+              <td><span class="date-val">{{ (u.created_at or '')[:10] }}</span></td>
+              <td>
+                <button class="btn-icon btn-edit" title="Edit"
+                        onclick='openEdit("{{ u.user_id }}", "{{ u.username or u.user_id }}", {{ ub|tojson }})'>✏️</button>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <p>No users found{% if search %} for "{{ search }}"{% endif %}.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal glass">
+    <div class="modal-header">
+      <h3 class="modal-title">✏️ Edit — <span id="modalUname"></span></h3>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modalUid"/>
+      <div class="form-group">
+        <label class="form-label">Coin</label>
+        <select id="coinSelect" class="form-input" onchange="updateCurrentBal()">
+          {% for c in coin_order %}
+          <option value="{{ c }}">{{ coins[c].label }} ({{ coins[c].symbol }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Balance</label>
+        <div class="balance-display" id="currentBal">—</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Set Balance</label>
+          <input type="number" step="any" id="setBalInput" class="form-input" placeholder="e.g. 0.05" min="0"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Add / Deduct</label>
+          <input type="number" step="any" id="addBalInput" class="form-input" placeholder="+0.01 or -0.005"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Set Hold</label>
+          <input type="number" step="any" id="setHoldInput" class="form-input" placeholder="e.g. 0.001" min="0"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">💾 Save</button>
+    </div>
+    <div class="modal-feedback" id="editFb"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let _uid = null;
+let _balances = {};
+
+function updateCurrentBal() {
+  const coin = document.getElementById('coinSelect').value;
+  const b = _balances[coin] || {balance: 0, hold: 0};
+  document.getElementById('currentBal').textContent = `${b.balance || 0} (hold: ${b.hold || 0})`;
+}
+
+function openEdit(uid, name, balances) {
+  _uid = uid;
+  _balances = balances || {};
+  document.getElementById('modalUname').textContent = name;
+  document.getElementById('setBalInput').value = '';
+  document.getElementById('addBalInput').value = '';
+  document.getElementById('setHoldInput').value = '';
+  document.getElementById('editFb').textContent = '';
+  updateCurrentBal();
+  document.getElementById('editModal').classList.add('active');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('active'); }
+
+async function doAction(action, coin, value) {
+  const fd = new FormData();
+  fd.append('action', action);
+  fd.append('coin', coin);
+  fd.append('value', value);
+  const r = await fetch(`/users/${_uid}/edit`, {method:'POST', body:fd});
+  return await r.json();
+}
+
+async function saveEdit() {
+  const coin  = document.getElementById('coinSelect').value;
+  const setB  = document.getElementById('setBalInput').value;
+  const addB  = document.getElementById('addBalInput').value;
+  const setH  = document.getElementById('setHoldInput').value;
+  const fb    = document.getElementById('editFb');
+  const acts  = [];
+  if (setB !== '') acts.push(['set_balance', parseFloat(setB)]);
+  if (addB !== '') acts.push(['add_balance', parseFloat(addB)]);
+  if (setH !== '') acts.push(['set_hold',    parseFloat(setH)]);
+  if (!acts.length) { fb.textContent = 'No changes entered.'; return; }
+  fb.textContent = 'Saving…'; fb.className = 'modal-feedback saving';
+  for (const [a, v] of acts) {
+    const d = await doAction(a, coin, v);
+    if (!d.ok) { fb.textContent = 'Error: '+(d.error||'unknown'); fb.className='modal-feedback error'; return; }
+  }
+  fb.textContent = '✅ Saved!'; fb.className = 'modal-feedback success';
+  setTimeout(() => location.reload(), 1000);
+}
+document.getElementById('editModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeEdit(); });
+</script>
+{% endblock %}

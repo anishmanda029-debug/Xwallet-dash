@@ -1,0 +1,2 @@
+# This file ensures the data directory is tracked by git.
+# The SQLite database (database.db) will be created here automatically on first run.

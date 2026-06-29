@@ -1,0 +1,185 @@
+/* ── Extra styles for dashboard pages ──────────────────── */
+
+/* Top users grid */
+.top-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.top-user-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: var(--transition);
+  position: relative;
+}
+.top-user-card:hover {
+  border-color: rgba(241,196,15,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(241,196,15,0.08);
+}
+.top-rank {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-muted);
+  min-width: 24px;
+  text-align: center;
+}
+.top-user-card:nth-child(1) .top-rank { color: #FFD700; }
+.top-user-card:nth-child(2) .top-rank { color: #C0C0C0; }
+.top-user-card:nth-child(3) .top-rank { color: #CD7F32; }
+.top-user-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blurple), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.top-user-info { flex: 1; min-width: 0; }
+.top-username  { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-balance   { font-size: 12px; font-weight: 600; margin-top: 2px; }
+.top-inr       { font-size: 11px; }
+
+/* Giveaway prize text */
+.prize-text {
+  font-weight: 600;
+  color: var(--gold);
+  max-width: 200px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Step badge */
+.step-val {
+  background: rgba(88,101,242,0.12);
+  color: var(--blurple);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Invite val */
+.invite-val {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Sidebar nav badge for pending */
+.nav-pending-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: auto;
+}
+
+/* Deposit action row */
+.deposit-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Settings code block */
+pre.code-block {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.9;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Filter tabs - method filter */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.method-filter-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.method-filter-btn:hover, .method-filter-btn.active {
+  background: rgba(88,101,242,0.15);
+  border-color: rgba(88,101,242,0.3);
+  color: var(--text-primary);
+}
+
+/* Withdrawal totals bar */
+.wd-totals-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.wd-total-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wd-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.wd-total-value { font-size: 18px; font-weight: 700; }
+.wd-total-value.gold  { color: var(--gold); }
+.wd-total-value.green { color: var(--green); }
+.wd-total-value.warn  { color: var(--orange); }
+
+/* Ticket type badges */
+.type-badge.support { background: rgba(88,101,242,0.12); color: var(--blurple); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+.type-badge.payment { background: rgba(241,196,15,0.12); color: var(--gold);    border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+.type-badge.earning { background: rgba(46,204,113,0.12); color: var(--green);   border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+
+/* Log table action colours */
+.action-badge.daily,  .action-badge.work        { background: rgba(46,204,113,0.12); color: var(--green); }
+.action-badge.transfer,.action-badge.admin-pay  { background: rgba(241,196,15,0.12); color: var(--gold); }
+.action-badge.withdraw-req,.action-badge.deposit-req { background: rgba(243,156,18,0.12); color: var(--orange); }
+.action-badge.ban, .action-badge.kick, .action-badge.antinuke-ban { background: rgba(231,76,60,0.12); color: var(--red); }
+.action-badge.ticket-open, .action-badge.ticket-close { background: rgba(155,89,182,0.12); color: var(--purple); }
+.action-badge.task-open, .action-badge.task-complete  { background: rgba(52,152,219,0.12); color: var(--blue); }
+.action-badge.hold-release, .action-badge.add-hold    { background: rgba(149,165,166,0.12); color: #95A5A6; }
+
+/* Responsive table scrolling on mobile */
+@media (max-width: 768px) {
+  .table-wrap  { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table  { min-width: 600px; }
+  .top-users-grid { grid-template-columns: 1fr 1fr; }
+  .wd-totals-bar { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .top-users-grid { grid-template-columns: 1fr; }
+  .wd-totals-bar  { grid-template-columns: 1fr; }
+}

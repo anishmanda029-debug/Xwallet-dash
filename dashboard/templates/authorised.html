@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Authorised Members — PremiumBot{% endblock %}
+{% block page_title %}Authorised Members{% endblock %}
+
+{% block content %}
+<div class="page-authorised">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>🔑 Add Authorised Member</h3>
+      <p class="panel-subtitle">Authorised members can approve deposits and withdrawals alongside the Owner, in every server the bot is in.</p>
+    </div>
+    <div class="panel-body">
+      <form id="addAuthForm" class="inline-form">
+        <input type="text" id="newUserId" placeholder="Discord User ID (e.g. 123456789012345678)" class="text-input" required pattern="[0-9]+"/>
+        <input type="text" id="newUsername" placeholder="Username (optional, for display)" class="text-input"/>
+        <button type="submit" class="btn btn-primary">+ Add</button>
+      </form>
+      <p class="hint-text">Tip: enable Developer Mode in Discord (Settings → Advanced) to right-click a user and "Copy User ID".</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Current Authorised Members</h3>
+      <span class="result-count">{{ authorised|length }} member{{ 's' if authorised|length != 1 }}</span>
+    </div>
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>User</th><th>ID</th><th>Added By</th><th>Added At</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for a in authorised %}
+            <tr id="row-{{ a.user_id }}">
+              <td>{{ a.username or '—' }}</td>
+              <td><code>{{ a.user_id }}</code></td>
+              <td><code>{{ a.added_by }}</code></td>
+              <td>{{ a.added_at }}</td>
+              <td><button class="btn btn-danger btn-xs" onclick="removeAuth('{{ a.user_id }}')">Remove</button></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted text-center">No authorised members yet — only the Owner can approve deposits/withdrawals.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('addAuthForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const userId = document.getElementById('newUserId').value.trim();
+  const username = document.getElementById('newUsername').value.trim();
+  const fd = new FormData();
+  fd.append('user_id', userId);
+  fd.append('username', username);
+  const r = await fetch('/authorised/add', {method: 'POST', body: fd});
+  const data = await r.json();
+  if (data.ok) {
+    location.reload();
+  } else {
+    showToast(data.error || 'Failed to add', 'warn');
+  }
+});
+
+async function removeAuth(userId) {
+  if (!confirm('Remove this authorised member?')) return;
+  const r = await fetch(`/authorised/${userId}/remove`, {method: 'POST'});
+  const data = await r.json();
+  if (data.ok) {
+    document.getElementById(`row-${userId}`).remove();
+  } else {
+    showToast(data.error || 'Failed to remove', 'warn');
+  }
+}
+
+function showToast(msg, type) {
+  alert(msg); // fallback if main.js toast isn't loaded on this page
+}
+</script>
+{% endblock %}

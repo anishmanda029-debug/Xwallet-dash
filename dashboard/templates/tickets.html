@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Tickets — PremiumBot{% endblock %}
+{% block page_title %}Ticket Management{% endblock %}
+
+{% block content %}
+<div class="page-tickets">
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <a href="/tickets?status=all&type={{ ttype }}"    class="tab {% if status=='all'    %}active{% endif %}">All</a>
+      <a href="/tickets?status=open&type={{ ttype }}"   class="tab {% if status=='open'   %}active{% endif %}">Open</a>
+      <a href="/tickets?status=closed&type={{ ttype }}" class="tab {% if status=='closed' %}active{% endif %}">Closed</a>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <a href="/tickets?status={{ status }}&type=all"     class="method-filter-btn {% if ttype=='all'     %}active{% endif %}">All Types</a>
+      <a href="/tickets?status={{ status }}&type=support" class="method-filter-btn {% if ttype=='support' %}active{% endif %}">🎫 Support</a>
+      <a href="/tickets?status={{ status }}&type=payment" class="method-filter-btn {% if ttype=='payment' %}active{% endif %}">💳 Payment</a>
+      <a href="/tickets?status={{ status }}&type=earning" class="method-filter-btn {% if ttype=='earning' %}active{% endif %}">💰 Earning</a>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Type</th><th>User ID</th><th>Channel ID</th>
+              <th>Status</th><th>Task Step</th><th>Opened</th><th>Closed</th><th>Transcript</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+            <tr>
+              <td><code class="id-code">#{{ t.id }}</code></td>
+              <td>
+                <span class="type-badge {{ t.type }}">
+                  {% if t.type=='support' %}🎫 Support
+                  {% elif t.type=='payment' %}💳 Payment
+                  {% elif t.type=='earning' %}💰 Earning
+                  {% else %}{{ t.type }}{% endif %}
+                </span>
+              </td>
+              <td><code class="id-code-sm">{{ t.user_id }}</code></td>
+              <td><code class="id-code-sm">{{ t.channel_id }}</code></td>
+              <td>
+                <span class="status-pill {{ t.status }}">
+                  {{ '🟢 Open' if t.status=='open' else '🔴 Closed' }}
+                </span>
+              </td>
+              <td><span class="step-val">{{ t.task_step or 0 }}</span></td>
+              <td><span class="date-val">{{ (t.created_at or '')[:16] }}</span></td>
+              <td><span class="date-val">{{ (t.closed_at or '—')[:16] }}</span></td>
+              <td>
+                {% if t.transcript %}
+                <button class="btn-sm btn-primary"
+                        onclick="showTranscript({{ t.id }}, `{{ t.transcript | replace('`','\'') | truncate(3000) | replace('\n','\\n') | replace('\r','') }}`)">
+                  📄 View
+                </button>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9">
+              <div class="empty-state">
+                <div class="empty-icon">🎫</div>
+                <p>No tickets found.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transcript Modal -->
+<div class="modal-overlay" id="transcriptModal">
+  <div class="modal glass modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title">📄 Ticket Transcript — <span id="transcriptId"></span></h3>
+      <button class="modal-close"
+              onclick="document.getElementById('transcriptModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="modal-body">
+      <pre class="transcript-content" id="transcriptContent"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"
+              onclick="document.getElementById('transcriptModal').classList.remove('active')">Close</button>
+      <button class="btn btn-primary" onclick="copyTranscript()">📋 Copy</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTranscript(id, text) {
+  document.getElementById('transcriptId').textContent = '#' + id;
+  document.getElementById('transcriptContent').textContent = text.replace(/\\n/g, '\n');
+  document.getElementById('transcriptModal').classList.add('active');
+}
+function copyTranscript() {
+  const text = document.getElementById('transcriptContent').textContent;
+  copyText(text, 'Transcript copied!');
+}
+document.getElementById('transcriptModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('active');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} Error — PremiumBot{% endblock %}
+
+{% block landing %}
+<div class="error-page">
+  <div class="error-card glass">
+    <div class="error-code">{{ code }}</div>
+    <div class="error-msg">{{ message }}</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <a href="{{ url_for('index') }}" class="btn btn-primary">← Go Home</a>
+      {% if session.user %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Dashboard</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}{% endblock %}

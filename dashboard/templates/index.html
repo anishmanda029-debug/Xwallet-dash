@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}PremiumBot — Premium Discord Bot{% endblock %}
+
+{% block landing %}
+<div class="landing">
+  <div class="landing-bg"></div>
+  <nav class="landing-nav">
+    <div class="landing-logo">
+      <span class="logo-icon-lg">⚡</span>
+      <span>PremiumBot</span>
+    </div>
+    <a href="{{ url_for('login') }}" class="btn btn-primary">Login with Discord</a>
+  </nav>
+
+  <div class="landing-hero">
+    <div class="hero-badge">✦ Premium Discord Bot</div>
+    <h1 class="hero-title">
+      The most powerful<br/>
+      <span class="gradient-text">Discord bot</span><br/>
+      you will ever use.
+    </h1>
+    <p class="hero-subtitle">
+      Economy · Rain · Giveaways · Tickets · Tasks<br/>
+      Withdrawals · AntiNuke · AutoMod · Web Dashboard
+    </p>
+    <div class="hero-actions">
+      <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+        🔐 Login with Discord
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="stat-num">55+</span>
+        <span class="stat-label">Commands</span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-num">15+</span>
+        <span class="stat-label">Systems</span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-num">24/7</span>
+        <span class="stat-label">Uptime</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="features-grid">
+    {% set features = [
+      ("💰","Economy","Dual INR + LTC wallet, daily rewards, work, leaderboard"),
+      ("☔","Rain","Animated coin rain with live countdown and fair splits"),
+      ("🎉","Giveaways","Live countdown, enter/leave toggle, force-pick winner"),
+      ("🎫","Tickets","Dropdown panel, transcripts, logs, add/remove user"),
+      ("📋","Tasks","Step-by-step task flow, progress bar, hold rewards"),
+      ("💸","Withdrawals","UPI + LTC, owner approval via DM, status tracking"),
+      ("📥","Deposits","INR/LTC QR codes, copy buttons, admin approval"),
+      ("🛡️","AntiNuke","Mass ban/kick/delete/webhook real-time protection"),
+      ("🤖","AutoMod","Spam, caps, invite, link filter with auto-mute"),
+      ("🔗","Invites","Live invite tracking with accurate leaderboard"),
+      ("🎭","Reaction Roles","Easy role assignment via emoji reactions"),
+      ("📊","Dashboard","Full web panel — manage users, withdrawals, settings"),
+    ] %}
+    {% for icon, name, desc in features %}
+    <div class="feature-card">
+      <div class="feature-icon">{{ icon }}</div>
+      <h3 class="feature-name">{{ name }}</h3>
+      <p class="feature-desc">{{ desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Deposits — PremiumBot{% endblock %}
+{% block page_title %}Deposit Requests{% endblock %}
+
+{% block content %}
+<div class="page-deposits">
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <a href="/deposits?status=all"      class="tab {% if status=='all'      %}active{% endif %}">All</a>
+      <a href="/deposits?status=pending"  class="tab {% if status=='pending'  %}active{% endif %}">
+        Pending <span class="tab-badge warn">{{ deposits | selectattr('status','equalto','pending') | list | length }}</span>
+      </a>
+      <a href="/deposits?status=approved" class="tab {% if status=='approved' %}active{% endif %}">Approved</a>
+      <a href="/deposits?status=rejected" class="tab {% if status=='rejected' %}active{% endif %}">Rejected</a>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="panel-title">📥 Deposit Requests</h3>
+      <span class="result-count">{{ deposits|length }} total</span>
+    </div>
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#ID</th><th>User ID</th><th>Coin</th>
+              <th>Amount</th><th>Net (after fee)</th><th>TxID / Payment</th>
+              <th>Status</th><th>Requested</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in deposits %}
+            <tr id="dep-{{ d.id }}">
+              <td><code class="id-code">#{{ d.id }}</code></td>
+              <td><code class="id-code-sm">{{ d.user_id }}</code></td>
+              <td><span class="method-badge">{{ coins.get(d.method, {}).get('symbol', d.method or '—') }}</span></td>
+              <td><span class="text-muted">{{ fmt_coin(d.method_amount or d.claimed_amount, d.method) }}</span></td>
+              <td><span class="coin-val gold">{{ fmt_coin(d.net_amount, d.method) }}</span></td>
+              <td>
+                {% if d.verified_txid %}
+                  <code class="id-code-sm" title="{{ d.verified_txid }}">{{ d.verified_txid[:10] }}…</code>
+                {% elif d.payment_id %}
+                  <code class="id-code-sm" title="Payment ref: {{ d.payment_id }}">{{ d.payment_id[:10] }}…</code>
+                {% elif d.txid %}
+                  <code class="id-code-sm" title="{{ d.txid }}">{{ d.txid[:10] }}…</code>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-pill {{ d.status }}">
+                  {% if d.status=='pending' %}⏳ Pending
+                  {% elif d.status=='pending_chain' %}⛓️ Confirming
+                  {% elif d.status=='approved' %}
+                    {% if d.auto_verified %}✅ Auto-Verified{% else %}✅ Approved{% endif %}
+                  {% else %}❌ Rejected{% endif %}
+                </span>
+              </td>
+              <td><span class="date-val">{{ (d.created_at or '')[:16] }}</span></td>
+              <td>
+                {% if d.status in ['pending', 'pending_chain'] %}
+                <div class="action-btns">
+                  <button class="btn-sm btn-success" onclick="approveDeposit({{ d.id }})">✅ Approve</button>
+                  <button class="btn-sm btn-danger" onclick="rejectDeposit({{ d.id }})">❌</button>
+                </div>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9">
+              <div class="empty-state">
+                <div class="empty-icon">📥</div>
+                <p>No deposit requests found.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function approveDeposit(id) {
+  const r = await fetch(`/deposits/${id}/approve`, {method:'POST'});
+  const d = await r.json();
+  if (d.ok) {
+    setTimeout(() => location.reload(), 600);
+  } else {
+    alert('Error: '+(d.error||'unknown'));
+  }
+}
+async function rejectDeposit(id) {
+  if (!confirm('Reject this deposit?')) return;
+  const r = await fetch(`/deposits/${id}/reject`, {method:'POST'});
+  const d = await r.json();
+  if (d.ok) {
+    setTimeout(() => location.reload(), 600);
+  } else {
+    alert('Error: '+(d.error||'unknown'));
+  }
+}
+</script>
+{% endblock %}

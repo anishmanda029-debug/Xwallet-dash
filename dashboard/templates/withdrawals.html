@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Withdrawals — PremiumBot{% endblock %}
+{% block page_title %}Withdrawal Management{% endblock %}
+
+{% block content %}
+<div class="page-withdrawals">
+
+  <!-- Totals Bar -->
+  <div class="wd-totals-bar">
+    {% for c in coin_order %}
+    {% if totals.get(c) and (totals[c].pending > 0 or totals[c].paid > 0) %}
+    <div class="wd-total-card">
+      <div class="wd-total-label">{{ coins[c].symbol }} Pending</div>
+      <div class="wd-total-value warn">{{ fmt_coin(totals[c].pending, c) }}</div>
+    </div>
+    <div class="wd-total-card">
+      <div class="wd-total-label">{{ coins[c].symbol }} Paid</div>
+      <div class="wd-total-value green">{{ fmt_coin(totals[c].paid, c) }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <a href="/withdrawals?status=all&coin={{ coin }}"      class="tab {% if status=='all'      %}active{% endif %}">All</a>
+      <a href="/withdrawals?status=pending&coin={{ coin }}"  class="tab {% if status=='pending'  %}active{% endif %}">
+        Pending <span class="tab-badge warn">{{ withdrawals | selectattr('status','equalto','pending') | list | length }}</span>
+      </a>
+      <a href="/withdrawals?status=approved&coin={{ coin }}" class="tab {% if status=='approved' %}active{% endif %}">Approved</a>
+      <a href="/withdrawals?status=paid&coin={{ coin }}"     class="tab {% if status=='paid'     %}active{% endif %}">Paid</a>
+      <a href="/withdrawals?status=rejected&coin={{ coin }}" class="tab {% if status=='rejected' %}active{% endif %}">Rejected</a>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <a href="/withdrawals?status={{ status }}&coin=all" class="method-filter-btn {% if coin=='all' %}active{% endif %}">All Coins</a>
+      {% for c in coin_order %}
+      <a href="/withdrawals?status={{ status }}&coin={{ c }}" class="method-filter-btn {% if coin==c %}active{% endif %}">{{ coins[c].symbol }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#ID</th><th>User ID</th><th>Coin</th><th>Address</th>
+              <th>Amount</th><th>Net Payout</th>
+              <th>Status</th><th>Requested</th><th>Note</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for w in withdrawals %}
+            <tr id="wd-{{ w.id }}">
+              <td><code class="id-code">#{{ w.id }}</code></td>
+              <td><code class="id-code-sm">{{ w.user_id }}</code></td>
+              <td><span class="method-badge">{{ coins.get(w.method, {}).get('symbol', w.method or '—') }}</span></td>
+              <td>
+                <code class="addr-code" title="{{ w.address }}">
+                  {{ (w.address or '')[:22] }}{% if (w.address or '')|length > 22 %}…{% endif %}
+                </code>
+              </td>
+              <td><span class="coin-val gold">{{ fmt_coin(w.amount, w.method) }}</span></td>
+              <td><span class="ltc-val">{{ fmt_coin(w.net_amount, w.method) }}</span></td>
+              <td>
+                <span class="status-pill {{ w.status }}">
+                  {% if w.status=='pending'   %}⏳ Pending
+                  {% elif w.status=='approved'%}✅ Approved
+                  {% elif w.status=='paid'    %}💸 Paid
+                  {% else                     %}❌ Rejected{% endif %}
+                </span>
+              </td>
+              <td><span class="date-val">{{ (w.created_at or '')[:16] }}</span></td>
+              <td><span class="note-text" title="{{ w.note or '' }}">{{ w.note or '—' }}</span></td>
+              <td>
+                {% if w.status == 'pending' %}
+                <div class="action-btns">
+                  <button class="btn-sm btn-success" onclick="wdAction({{ w.id }},'approve')">✅</button>
+                  <button class="btn-sm btn-danger"  onclick="openReject({{ w.id }})">❌</button>
+                </div>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10">
+              <div class="empty-state">
+                <div class="empty-icon">💸</div>
+                <p>No {{ status }} withdrawals found.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal glass">
+    <div class="modal-header">
+      <h3 class="modal-title">❌ Reject Withdrawal</h3>
+      <button class="modal-close" onclick="closeReject()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rejectWid"/>
+      <div class="form-group">
+        <label class="form-label">Rejection Reason</label>
+        <textarea id="rejectNote" class="form-input" rows="3" placeholder="Enter reason for rejection…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeReject()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">❌ Confirm Reject</button>
+    </div>
+    <div class="modal-feedback" id="rejectFb"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function wdAction(wid, action, note='') {
+  const row = document.getElementById('wd-'+wid);
+  const fd  = new FormData();
+  fd.append('action', action);
+  fd.append('note', note);
+  const r = await fetch(`/withdrawals/${wid}/action`, {method:'POST',body:fd});
+  const d = await r.json();
+  if (d.ok) {
+    row.style.opacity = '0';
+    row.style.transition = 'opacity 0.4s';
+    setTimeout(() => location.reload(), 800);
+  } else {
+    alert('Error: '+(d.error||'unknown'));
+  }
+}
+
+let _rWid = null;
+function openReject(wid) {
+  _rWid = wid;
+  document.getElementById('rejectNote').value = '';
+  document.getElementById('rejectFb').textContent = '';
+  document.getElementById('rejectModal').classList.add('active');
+}
+function closeReject() { document.getElementById('rejectModal').classList.remove('active'); }
+async function confirmReject() {
+  const note = document.getElementById('rejectNote').value.trim();
+  if (!note) { document.getElementById('rejectFb').textContent = 'Enter a reason.'; return; }
+  await wdAction(_rWid, 'reject', note);
+  closeReject();
+}
+document.getElementById('rejectModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeReject(); });
+</script>
+{% endblock %}

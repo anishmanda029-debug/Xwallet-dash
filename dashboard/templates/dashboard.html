@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — PremiumBot{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-home">
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(88,101,242,.15);color:#5865F2">👥</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-users">{{ stats.users | default(0) }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-glow" style="--glow:#5865F2"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(241,196,15,.15);color:#F1C40F">💸</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-pending">{{ stats.pending_wd | default(0) }}</div>
+        <div class="stat-label">Pending Withdrawals</div>
+        {% if stats.pending_wd > 0 %}<a href="/withdrawals?status=pending" class="stat-action">Review →</a>{% endif %}
+      </div>
+      <div class="stat-glow" style="--glow:#F1C40F"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(46,204,113,.15);color:#2ECC71">📥</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-pending-dep">{{ stats.pending_dep | default(0) }}</div>
+        <div class="stat-label">Pending Deposits</div>
+        {% if stats.pending_dep > 0 %}<a href="/deposits?status=pending" class="stat-action">Review →</a>{% endif %}
+      </div>
+      <div class="stat-glow" style="--glow:#2ECC71"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(231,76,60,.15);color:#E74C3C">🎫</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-tickets">{{ stats.open_tickets | default(0) }}</div>
+        <div class="stat-label">Open Tickets</div>
+        {% if stats.open_tickets > 0 %}<a href="/tickets" class="stat-action">View →</a>{% endif %}
+      </div>
+      <div class="stat-glow" style="--glow:#E74C3C"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(155,89,182,.15);color:#9B59B6">🎉</div>
+      <div class="stat-body">
+        <div class="stat-value">{{ stats.giveaways | default(0) }}</div>
+        <div class="stat-label">Giveaways Run</div>
+      </div>
+      <div class="stat-glow" style="--glow:#9B59B6"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(52,152,219,.15);color:#3498DB">📋</div>
+      <div class="stat-body">
+        <div class="stat-value">{{ stats.tasks | default(0) }}</div>
+        <div class="stat-label">Tasks ({{ stats.tasks_done | default(0) }} done)</div>
+      </div>
+      <div class="stat-glow" style="--glow:#3498DB"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(241,196,15,.15);color:#F1C40F">🔑</div>
+      <div class="stat-body">
+        <div class="stat-value">{{ stats.authorised | default(0) }}</div>
+        <div class="stat-label">Authorised Members</div>
+      </div>
+      <div class="stat-glow" style="--glow:#F1C40F"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(149,165,166,.15);color:#95A5A6">🏠</div>
+      <div class="stat-body">
+        <div class="stat-value">{{ stats.servers | default(0) }}</div>
+        <div class="stat-label">Servers</div>
+      </div>
+      <div class="stat-glow" style="--glow:#95A5A6"></div>
+    </div>
+  </div>
+
+  <!-- Middle Row -->
+  <div class="dashboard-row">
+    <!-- Holdings Panel (multi-coin) -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3 class="panel-title">💹 Holdings — All Coins</h3>
+        <a href="/backup/export" class="panel-link">💾 Export Backup</a>
+      </div>
+      <div class="panel-body">
+        {% set any_holdings = false %}
+        {% for c in coin_order %}
+          {% set h = holdings.get(c) %}
+          {% if h and (h.balance > 0 or h.hold > 0) %}
+            {% set any_holdings = true %}
+            <div class="economy-item">
+              <span class="econ-label">{{ coins[c].label }} ({{ coins[c].symbol }})</span>
+              <span class="econ-value gold">{{ fmt_coin(h.balance, c) }}{% if h.hold > 0 %} <span class="text-muted">(+{{ fmt_coin(h.hold, c) }} hold)</span>{% endif %}</span>
+            </div>
+            <div class="economy-divider"></div>
+          {% endif %}
+        {% endfor %}
+        {% if not any_holdings %}
+        <p class="text-muted">No deposits yet across any coin.</p>
+        {% endif %}
+        <div class="economy-item">
+          <span class="econ-label">Total Withdrawals</span>
+          <span class="econ-value">{{ stats.withdrawals | default(0) }}</span>
+        </div>
+        <div class="economy-item">
+          <span class="econ-label">Approved / Paid</span>
+          <span class="econ-value green">{{ stats.approved_wd | default(0) }}</span>
+        </div>
+        <div class="economy-item">
+          <span class="econ-label">Deposit Requests</span>
+          <span class="econ-value">{{ stats.deposits | default(0) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="panel panel-wide">
+      <div class="panel-header">
+        <h3 class="panel-title">📋 Recent Activity</h3>
+        <a href="/logs" class="panel-link">View All →</a>
+      </div>
+      <div class="panel-body">
+        {% if recent_logs %}
+        <div class="log-list">
+          {% for log in recent_logs %}
+          <div class="log-item">
+            <div class="log-action-badge {{ log.action | lower | replace('_','-') }}">{{ log.action }}</div>
+            <div class="log-detail">
+              <span class="log-user">{{ (log.user_id or '')[:10] }}…</span>
+              <span class="log-text">{{ (log.detail or '')[:55] }}{% if (log.detail or '')|length > 55 %}…{% endif %}</span>
+            </div>
+            <span class="log-time">{{ (log.created_at or '')[:16] }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">📋</div><p>No activity yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Users -->
+  {% if top_users %}
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="panel-title">🏆 Top Holders (across coins)</h3>
+      <a href="/users" class="panel-link">All Users →</a>
+    </div>
+    <div class="panel-body">
+      <div class="top-users-grid">
+        {% for u in top_users %}
+        <div class="top-user-card">
+          <div class="top-rank">{{ loop.index }}</div>
+          <div class="top-user-avatar">{{ (u.username or '?')[0].upper() }}</div>
+          <div class="top-user-info">
+            <div class="top-username">{{ u.username or 'Unknown' }}</div>
+            <div class="top-balance gold">{{ fmt_coin(u.balance, u.coin) }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions -->
+  <div class="panel">
+    <div class="panel-header"><h3 class="panel-title">⚡ Quick Actions</h3></div>
+    <div class="panel-body">
+      <div class="quick-actions">
+        <a href="/withdrawals?status=pending" class="quick-btn warn">
+          💸 Review Withdrawals
+          {% if stats.pending_wd > 0 %}<span class="badge">{{ stats.pending_wd }}</span>{% endif %}
+        </a>
+        <a href="/deposits?status=pending" class="quick-btn success">
+          📥 Approve Deposits
+          {% if stats.pending_dep > 0 %}<span class="badge">{{ stats.pending_dep }}</span>{% endif %}
+        </a>
+        <a href="/users" class="quick-btn primary">👥 Manage Users</a>
+        <a href="/tickets" class="quick-btn error">
+          🎫 View Tickets
+          {% if stats.open_tickets > 0 %}<span class="badge">{{ stats.open_tickets }}</span>{% endif %}
+        </a>
+        <a href="/giveaways" class="quick-btn">🎉 Giveaways</a>
+        <a href="/servers" class="quick-btn">🏠 Servers</a>
+        <a href="/settings" class="quick-btn success">⚙️ Settings</a>
+        <a href="/logs" class="quick-btn">📋 Logs</a>
+        {% if user.id|string == owner_id|string %}
+        <a href="/authorised" class="quick-btn primary">🔑 Authorised Members</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+setInterval(async () => {
+  try {
+    const r = await fetch('/api/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+    const map = {
+      'stat-users':       d.users,
+      'stat-pending':     d.pending_wd,
+      'stat-pending-dep': d.pending_dep,
+      'stat-tickets':     d.open_tickets,
+    };
+    for (const [id, val] of Object.entries(map)) {
+      const el = document.getElementById(id);
+      if (el && el.textContent != val) el.textContent = val;
+    }
+  } catch {}
+}, 30000);
+</script>
+{% endblock %}

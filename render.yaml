@@ -1,0 +1,62 @@
+services:
+  - type: worker
+    name: premiumbot-discord
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run_bot.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: BOT_PREFIX
+        value: "!"
+      - key: DAILY_AMOUNT
+        value: "500"
+      - key: WORK_MIN
+        value: "100"
+      - key: WORK_MAX
+        value: "400"
+      - key: TASK_REWARD
+        value: "200"
+      - key: INR_RATE
+        value: "0.1"
+      - key: LTC_RATE
+        value: "0.000001"
+      - key: HOLD_DAYS
+        value: "3"
+      - key: UPI_ID
+        sync: false
+      - key: LTC_ADDRESS
+        sync: false
+      - key: INR_QR_URL
+        sync: false
+      - key: LTC_QR_URL
+        sync: false
+      - key: DATABASE_PATH
+        value: "bot/data/database.db"
+
+  - type: web
+    name: premiumbot-dashboard
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn dashboard.app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60 --log-level info
+    envVars:
+      - key: DASHBOARD_SECRET
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_REDIRECT_URI
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: DATABASE_PATH
+        value: "bot/data/database.db"
+      - key: INR_RATE
+        value: "0.1"
+      - key: LTC_RATE
+        value: "0.000001"

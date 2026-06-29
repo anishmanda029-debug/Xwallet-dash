@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Logs — PremiumBot{% endblock %}
+{% block page_title %}Activity Logs{% endblock %}
+
+{% block content %}
+<div class="page-logs">
+  <div class="toolbar">
+    <form class="search-form" method="GET" action="/logs">
+      <select name="action" class="select-input" onchange="this.form.submit()">
+        <option value="">All Actions</option>
+        {% for a in actions %}
+        <option value="{{ a.action }}" {% if action_filter==a.action %}selected{% endif %}>{{ a.action }}</option>
+        {% endfor %}
+      </select>
+      <div class="search-wrap">
+        <span class="search-icon">👤</span>
+        <input type="text" name="user" value="{{ user_filter }}" placeholder="Filter by user ID…"
+               class="search-input" style="min-width:180px"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      {% if action_filter or user_filter %}
+      <a href="/logs" class="btn btn-ghost btn-sm">✕ Clear</a>
+      {% endif %}
+    </form>
+    <div class="toolbar-right">
+      <span class="result-count">{{ logs|length }} log{{ 's' if logs|length != 1 }}</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Action</th><th>User ID</th><th>Guild ID</th><th>Detail</th><th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+            <tr class="log-table-row">
+              <td><code class="id-code">{{ log.id }}</code></td>
+              <td>
+                <span class="action-badge {{ log.action | lower | replace('_','-') }}">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td><code class="id-code-sm">{{ log.user_id }}</code></td>
+              <td><code class="id-code-sm">{{ log.guild_id }}</code></td>
+              <td class="detail-cell" title="{{ log.detail or '' }}">{{ (log.detail or '—')[:60] }}{% if (log.detail or '')|length > 60 %}…{% endif %}</td>
+              <td><span class="date-val">{{ (log.created_at or '')[:16] }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>No logs found{% if action_filter %} for action "{{ action_filter }}"{% endif %}.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

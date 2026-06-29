@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Giveaways — PremiumBot{% endblock %}
+{% block page_title %}Giveaway Manager{% endblock %}
+
+{% block content %}
+<div class="page-giveaways">
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="panel-title">🎉 Giveaways</h3>
+      <span class="result-count">{{ giveaways|length }} total</span>
+    </div>
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Prize</th><th>Winners</th>
+              <th>Entries</th><th>Host</th>
+              <th>Status</th><th>Ends At</th><th>Winner IDs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in giveaways %}
+            <tr>
+              <td><code class="id-code">#{{ g.id }}</code></td>
+              <td><span class="prize-text">{{ g.prize }}</span></td>
+              <td><code>{{ g.winners }}</code></td>
+              <td>
+                {% set parts = g.participants | default('[]') %}
+                <code>{{ parts | length if parts != '[]' else 0 }}</code>
+              </td>
+              <td><code class="id-code-sm">{{ g.host_id }}</code></td>
+              <td>
+                <span class="status-pill {{ g.status }}">
+                  {% if g.status == 'active' %}🟢 Active
+                  {% else %}🔴 Ended{% endif %}
+                </span>
+              </td>
+              <td><span class="date-val">{{ (g.end_time or '')[:16] }}</span></td>
+              <td>
+                {% set winners = g.winner_ids | default('[]') %}
+                {% if winners != '[]' and winners != 'null' %}
+                <code class="id-code-sm">{{ winners[:40] }}{% if winners|length > 40 %}…{% endif %}</code>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">
+              <div class="empty-state">
+                <div class="empty-icon">🎉</div>
+                <p>No giveaways found.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

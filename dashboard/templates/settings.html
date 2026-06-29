@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Settings — XWALLET{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-settings">
+
+  <div class="info-box">
+    <span class="info-icon">ℹ️</span>
+    Coin prices are fetched live from CoinGecko — no manual conversion rates to configure.
+    Fees and minimums are set via <code>FEE_PCT</code> and <code>MIN_USD</code> in <code>.env</code>.
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="panel-title">🔀 Deposit Detection & Withdraw Payout Methods</h3>
+      <p class="panel-subtitle">Per-coin toggle. Alchemy deposit detection only covers ETH and USDT-ERC20.</p>
+    </div>
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Coin</th><th>Deposit Detection</th><th>Withdraw Payout</th></tr></thead>
+          <tbody>
+            {% for c in coin_order %}
+            <tr>
+              <td><strong>{{ coins[c].label }} ({{ coins[c].symbol }})</strong></td>
+              <td>
+                <select class="form-input method-select" data-coin="{{ c }}" data-kind="detection" onchange="updateMethod(this)">
+                  <option value="watcher" {% if detection.get(c, 'watcher') == 'watcher' %}selected{% endif %}>Watcher (own bot)</option>
+                  <option value="alchemy" {% if detection.get(c) == 'alchemy' %}selected{% endif %} {% if c not in ['eth','usdterc20'] %}disabled{% endif %}>Alchemy Notify</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-input method-select" data-coin="{{ c }}" data-kind="withdraw" onchange="updateMethod(this)">
+                  <option value="manual" {% if withdraw_methods.get(c, 'manual') == 'manual' %}selected{% endif %}>Manual (pay from own wallet)</option>
+                  <option value="alchemy" {% if withdraw_methods.get(c) == 'alchemy' %}selected{% endif %}>Alchemy (broadcast signed tx)</option>
+                </select>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guild configs -->
+  {% for guild in guilds %}
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="panel-title">⚙️ Guild · <code>{{ guild.guild_id }}</code></h3>
+    </div>
+    <div class="panel-body">
+
+      <!-- Quick toggles -->
+      <div class="settings-toggles">
+        <div class="toggle-row">
+          <span class="toggle-label">⚙️ Prefix</span>
+          <input type="text" class="form-input toggle-input" value="{{ guild.prefix or '!' }}"
+                 id="prefix-{{ guild.guild_id }}" maxlength="5" style="width:80px;text-align:center"/>
+          <button class="btn btn-primary btn-sm"
+                  onclick="updateGuild('{{ guild.guild_id }}','prefix',document.getElementById('prefix-{{ guild.guild_id }}').value)">Save</button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">🔒 Hold Days</span>
+          <input type="number" class="form-input toggle-input" value="{{ guild.hold_days or 3 }}"
+                 id="holddays-{{ guild.guild_id }}" min="1" max="30" style="width:80px;text-align:center"/>
+          <button class="btn btn-primary btn-sm"
+                  onclick="updateGuild('{{ guild.guild_id }}','hold_days',document.getElementById('holddays-{{ guild.guild_id }}').value)">Save</button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">💰 Task Reward (LTC)</span>
+          <input type="number" step="any" class="form-input toggle-input" value="{{ guild.task_reward_ltc or 0.001 }}"
+                 id="reward-{{ guild.guild_id }}" min="0" style="width:110px;text-align:center"/>
+          <button class="btn btn-primary btn-sm"
+                  onclick="updateGuild('{{ guild.guild_id }}','task_reward_ltc',document.getElementById('reward-{{ guild.guild_id }}').value)">Save</button>
+        </div>
+      </div>
+
+      <!-- Role / Channel info -->
+      <div class="settings-grid">
+        {% set items = [
+          ('👑','Owner Role', guild.owner_role),
+          ('🛡️','Staff Role', guild.staff_role),
+          ('💰','Earn Role', guild.earn_role),
+          ('⭐','Sub Role', guild.sub_role),
+          ('📋','Log Channel', guild.log_channel),
+          ('💸','Withdraw Log', guild.withdraw_log),
+          ('📥','Deposit Log', guild.deposit_log),
+          ('🎫','Ticket Log', guild.ticket_log),
+        ] %}
+        {% for icon, label, val in items %}
+        <div class="setting-item">
+          <span class="setting-label">{{ icon }} {{ label }}</span>
+          <code class="setting-val">{{ val or 'Not set' }}</code>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="hint-text">Use <code>/setlogchannel</code>, <code>/setwithdrawlog</code>, <code>/setdepositlog</code>, <code>/setticketlog</code> in Discord to set these.</p>
+
+      <!-- Task message editor -->
+      <div class="task-editor">
+        <div class="task-editor-header">
+          <h4 class="task-editor-title">📋 Task Message Template</h4>
+          <span class="task-editor-note">Shown to users in earning tickets</span>
+        </div>
+        <form onsubmit="saveTask(event,'{{ guild.guild_id }}')">
+          <textarea name="task_message" class="form-input task-textarea" rows="5"
+                    placeholder="First Name:&#10;Email:&#10;Password:">{{ guild.task_message or 'First Name:\nEmail:\nPassword:' }}</textarea>
+          <div class="task-form-footer">
+            <button type="submit" class="btn btn-primary">💾 Save Template</button>
+            <div class="task-feedback" id="task-fb-{{ guild.guild_id }}"></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel">
+    <div class="panel-body">
+      <div class="empty-state">
+        <div class="empty-icon">⚙️</div>
+        <p>No guilds found. Add the bot to a server and run a command first.</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- .env reference -->
+  <div class="panel">
+    <div class="panel-header"><h3 class="panel-title">📄 .env Quick Reference</h3></div>
+    <div class="panel-body">
+      <pre class="code-block">DISCORD_TOKEN=your_bot_token
+OWNER_ID=your_discord_user_id
+OWNER_PASSWORD=your_secret_password
+FEE_PCT=2
+MIN_USD=0.03
+BTC_ADDRESS=bc1q...
+LTC_ADDRESS=ltc1q...
+ETH_ADDRESS=0x...
+SOL_ADDRESS=...
+USDT_ERC20_ADDRESS=0x...
+USDT_TRC20_ADDRESS=T...
+WATCHER_SHARED_SECRET=random-secret-matching-watcher-env
+ALCHEMY_API_KEY=your_alchemy_api_key
+ALCHEMY_SIGNING_KEY=your_alchemy_webhook_signing_key
+PUBLIC_URL=https://yourapp.onrender.com
+DASHBOARD_SECRET=random-secret-string
+DISCORD_CLIENT_ID=oauth2_client_id
+DISCORD_CLIENT_SECRET=oauth2_client_secret
+DISCORD_REDIRECT_URI=https://yourdomain.com/callback</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function saveTask(e, guildId) {
+  e.preventDefault();
+  const fb  = document.getElementById('task-fb-' + guildId);
+  const fd  = new FormData(e.target);
+  fd.append('guild_id', guildId);
+  fb.textContent = 'Saving…'; fb.className = 'task-feedback saving';
+  const r = await fetch('/settings/task', {method:'POST', body:fd});
+  const d = await r.json();
+  if (d.ok) { fb.textContent = '✅ Saved!'; fb.className = 'task-feedback success'; }
+  else       { fb.textContent = '❌ Error'; fb.className = 'task-feedback error'; }
+  setTimeout(() => { fb.textContent = ''; }, 3000);
+}
+
+async function updateGuild(guildId, field, value) {
+  const fd = new FormData();
+  fd.append('guild_id', guildId);
+  fd.append('field',    field);
+  fd.append('value',    value);
+  const r = await fetch('/settings/guild', {method:'POST', body:fd});
+  const d = await r.json();
+  if (!d.ok) alert('Error: ' + (d.error||'unknown'));
+}
+
+async function updateMethod(selectEl) {
+  const coin   = selectEl.dataset.coin;
+  const kind   = selectEl.dataset.kind;
+  const method = selectEl.value;
+  const fd = new FormData();
+  fd.append('coin', coin);
+  fd.append('kind', kind);
+  fd.append('method', method);
+  const r = await fetch('/settings/method', {method:'POST', body:fd});
+  const d = await r.json();
+  if (!d.ok) {
+    alert('Error: ' + (d.error || 'unknown'));
+    location.reload();
+  }
+}
+</script>
+{% endblock %}

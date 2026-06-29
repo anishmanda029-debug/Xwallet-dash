@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Servers — PremiumBot{% endblock %}
+{% block page_title %}Servers{% endblock %}
+
+{% block content %}
+<div class="page-servers">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>🏠 Servers the Bot Is In</h3>
+      <span class="result-count">{{ servers|length }} server{{ 's' if servers|length != 1 }}</span>
+    </div>
+    <div class="panel-body p0">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Server</th><th>ID</th><th>Members</th><th>Joined</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for s in servers %}
+            <tr>
+              <td>
+                <div class="server-cell">
+                  {% if s.icon_url %}<img src="{{ s.icon_url }}" class="server-icon" alt=""/>{% else %}<div class="server-icon-placeholder">🏠</div>{% endif %}
+                  <span>{{ s.name or 'Unknown' }}</span>
+                </div>
+              </td>
+              <td><code>{{ s.guild_id }}</code></td>
+              <td>{{ s.member_count }}</td>
+              <td>{{ s.joined_at }}</td>
+              <td>
+                {% if s.active %}<span class="badge-success">Active</span>{% else %}<span class="badge-muted">Removed</span>{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted text-center">No servers tracked yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
