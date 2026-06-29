@@ -174,7 +174,7 @@ class Admin(commands.Cog):
         await add_log(str(ctx.guild.id) if ctx.guild else "DM", str(ctx.author.id), "ADMIN_PAY", f"+{amount}{coin_code}→{user.id}")
 
     # ── $userinfo [@user] ─────────────────────────────────────────────────────
-    @commands.command(name="userinfo", aliases=["ui", "whois", "profile"], hidden=True)
+    @commands.command(name="userinfo", aliases=["ui", "whois"], hidden=True)
     @_staff_only()
     async def userinfo(self, ctx, user: discord.Member = None):
         """Deep user profile with balances and stats."""
