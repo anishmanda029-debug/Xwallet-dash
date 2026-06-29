@@ -242,7 +242,7 @@ class Info(commands.Cog):
         em = await _profile_embed(interaction.user, self.bot.user.id)
         await interaction.followup.send(embed=em, ephemeral=True)
 
-    @commands.command(name="profile", aliases=["me", "stats"])
+    @commands.command(name="profile", aliases=["me", "st"])
     async def profile_prefix(self, ctx):
         async with ctx.typing():
             em = await _profile_embed(ctx.author, self.bot.user.id)
